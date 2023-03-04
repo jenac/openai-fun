@@ -1,0 +1,25 @@
+{
+    "manifest_version": 2,
+    "name": "ChatGPT to Markdown",
+    "version": "1.0",
+    "description": "Export ChatGPT conversation to Markdown file with toggleable questions.",
+    "permissions": [
+        "tabs",
+        "activeTab",
+        "storage",
+        "runtime"
+    ],
+    "browser_action": {
+     
+        "default_popup": "popup/popup.html"
+    },
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": ["content.js"]
+      }],
+    "background": {
+        "scripts": ["background.js"]
+      }
+   
+    
+}
