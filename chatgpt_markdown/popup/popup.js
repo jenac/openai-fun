@@ -1,55 +1,67 @@
-const conversation = [];
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'document') {
-      const documentData = message.data;
-      getConversation(documentData);  
-    
+const exportButton = document.getElementById('export-button');
+if (exportButton) {
+    exportButton.onclick = () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            tabId = tabs[0].id;
+            injectScrtiptToTab(tabId);
+        })
+
     }
-  });
-  
-
-
-function getMarkdown(conversation, showQuestions) {
-    let markdown = '';
-
-    conversation.forEach(message => {
-        if (message.type === 'question') {
-            if (showQuestions) {
-                markdown += `**Q:** ${message.text}\n\n`;
-            }
-        } else {
-            markdown += `**A:** ${message.text}\n\n`;
-        }
-    });
-
-    return markdown;
+} else {
+    alert('No export button found');
 }
 
-function downloadMarkdown(markdown) {
-    const filename = `chatgpt-conversation-${new Date().toISOString()}.md`;
-    const blob = new Blob([markdown], { type: 'text/markdown' });
+const injectScrtiptToTab = (tabId) => {
+    chrome.scripting.executeScript(
+        {
+            target: { tabId: tabId },
+            func: exportAsMarkdown,
+        },
+        () => { }
+    );
+}
 
+const exportAsMarkdown = () => {
+    console.log('exportAsMarkdown');
+    // alert("Hello world!");
+    const parseDocument = () => {
+        const documentData = document.getElementsByClassName('items-center')[0];
+        const messages = Array.from(documentData.getElementsByClassName('text-gray-800'));
+        const conversation = messages.map((message, index) => {
+            //simply take even as question (0, 2, 4, ...)
+            if (index % 2 == 0) {
+                return `**Q:** ${message.textContent.replace(/\n/g, '  \n')}\n\n`;
+            } else {
+                const section = message.querySelector('.markdown');
+                let parsedText = '';
+                for (let i = 0; i < section.children.length; i++) {
+                    const child = section.children[i];
+                    if (child.tagName.toLowerCase() === 'pre') {
+                        const code = child.querySelector('code');
+                        parsedText += "```" + code.textContent.replace(/\n/g, '  \n') + "```\n\n";
+                    } else {
+                        
+                        parsedText += child.textContent.replace(/\n/g, '  \n') + "\n\n";
+                    }
+                }
+                return `**A:** ${parsedText}\n\n`
+            }
+
+        })
+        return conversation;
+    };
+
+
+    const conversation = parseDocument();
+    // console.log(conversation);
+
+    const markDown = conversation.reduce((prev, curr) => prev + curr);
+    console.log(markDown);
+
+    const filename = 'chatgpt-conversation-' + new Date().toISOString().slice(0, 10) + '.md';
+    var blob = new Blob([markDown], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
 }
-
-function init() {
-    const toggleQuestions = document.getElementById('toggle-questions');
-    const exportButton = document.getElementById('export-button');
-
-    chrome.storage.sync.get({ showQuestions: true }, data => {
-       toggleQuestions.checked = data.showQuestions;
-    });
-
-    toggleQuestions.addEventListener('change', () => {
-        chrome.storage.sync.set({ showQuestions: toggleQuestions.checked });
-    });
-
-    exportButton.addEventListener('click', () => {
-        chrome.runtime.sendMessage({type: 'save', showQuestion: document.getElementById('toggle-questions').checked});
-    });
-}
-
-init();
