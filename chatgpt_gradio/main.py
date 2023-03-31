@@ -2,12 +2,12 @@ import numpy as np
 import gradio as gr
 import openai
 
-import os
-import openai
-openai.organization = "org-XMtARFaEgD2pR8Ea8yUZmeQS"
-openai.api_key = os.getenv("OPENAI_API_KEY")
-models = openai.Model.list()
-print(models)
+# import os
+# import openai
+# openai.organization = "org-XMtARFaEgD2pR8Ea8yUZmeQS"
+# openai.api_key = os.getenv("OPENAI_API_KEY")
+# models = openai.Model.list()
+# print(models)
 
 # openai.ChatCompletion.create(
 #   model = "gpt-3.5-turbo",
